@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import {
   ReactFlow,
   Background,
@@ -16,10 +17,21 @@ import PasswordGate, { useAuth } from './components/PasswordGate'
 const nodeTypes = { ifsNode: IFSNode }
 
 export default function App() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useStore()
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, loadFromDB, loading } = useStore()
   const { authed, login } = useAuth()
 
+  useEffect(() => {
+    if (authed) loadFromDB()
+  }, [authed])
+
   if (!authed) return <PasswordGate onAuth={login} />
+
+  if (loading) return (
+    <div className="loading-screen">
+      <div className="loading-dot" />
+      <span>Cargando tu mapa...</span>
+    </div>
+  )
 
   return (
     <div className="app-shell">
