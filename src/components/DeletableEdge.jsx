@@ -1,4 +1,4 @@
-import { BaseEdge, EdgeLabelRenderer, getStraightPath, getBezierPath, useReactFlow } from '@xyflow/react'
+import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react'
 import { useStore } from '../store/useStore'
 import { X } from 'lucide-react'
 
@@ -14,6 +14,12 @@ export default function DeletableEdge({
     targetX, targetY, targetPosition,
   })
 
+  const handleDelete = (e) => {
+    e.stopPropagation()
+    e.preventDefault()
+    deleteEdge(id)
+  }
+
   return (
     <>
       <BaseEdge path={edgePath} style={style} animated={animated} markerEnd={markerEnd} />
@@ -23,16 +29,18 @@ export default function DeletableEdge({
             position: 'absolute',
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             pointerEvents: 'all',
+            zIndex: 100,
           }}
-          className="edge-delete-wrapper nodrag nopan"
+          className="nodrag nopan"
         >
           <button
             className="edge-delete-btn"
-            style={{ borderColor: isPolar ? '#ef444466' : '#ffffff22' }}
-            onClick={() => deleteEdge(id)}
+            style={{ borderColor: isPolar ? '#ef444466' : '#ffffff33' }}
+            onClick={handleDelete}
+            onTouchEnd={handleDelete}
             title="Borrar conexión"
           >
-            <X size={9} />
+            <X size={10} />
           </button>
         </div>
       </EdgeLabelRenderer>
