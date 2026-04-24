@@ -6,7 +6,7 @@ const PART_TYPES = {
   manager: { label: 'Manager', color: '#6366f1', glow: '#6366f144' },
   firefighter: { label: 'Firefighter', color: '#ef4444', glow: '#ef444444' },
   exile: { label: 'Exile', color: '#8b5cf6', glow: '#8b5cf644' },
-  protector: { label: 'Protector', color: '#10b981', glow: '#10b98144' },
+
 }
 
 const DEFAULT_NODES = [

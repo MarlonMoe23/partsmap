@@ -1,29 +1,57 @@
 import { useStore, PART_TYPES } from '../store/useStore'
-import { X, Trash2 } from 'lucide-react'
+import { X, Trash2, GripHorizontal } from 'lucide-react'
+import { useRef, useState } from 'react'
 
 const ESTADOS = ['Activa', 'En paz', 'En proceso', 'Desconocido']
 
 export default function PartPanel() {
   const { nodes, selectedNodeId, panelOpen, closePanel, updateNodeData, deleteNode } = useStore()
+  const [pos, setPos] = useState({ x: 80, y: 60 })
+  const dragging = useRef(false)
+  const offset = useRef({ x: 0, y: 0 })
 
   if (!panelOpen || !selectedNodeId) return null
-
   const node = nodes.find((n) => n.id === selectedNodeId)
   if (!node) return null
 
   const { data } = node
   const typeConfig = PART_TYPES[data.partType] ?? PART_TYPES.manager
-
   const update = (field) => (e) => updateNodeData(selectedNodeId, { [field]: e.target.value })
 
+  const onMouseDown = (e) => {
+    dragging.current = true
+    offset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y }
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+  }
+
+  const onMouseMove = (e) => {
+    if (!dragging.current) return
+    setPos({ x: e.clientX - offset.current.x, y: e.clientY - offset.current.y })
+  }
+
+  const onMouseUp = () => {
+    dragging.current = false
+    window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('mouseup', onMouseUp)
+  }
+
   return (
-    <div className="part-panel">
+    <div
+      className="part-panel-float"
+      style={{ left: pos.x, top: pos.y, borderColor: `${typeConfig.color}44` }}
+    >
+      {/* Drag handle */}
+      <div className="panel-drag-handle" onMouseDown={onMouseDown}>
+        <GripHorizontal size={14} color="#ffffff25" />
+      </div>
+
       <div className="panel-header" style={{ borderBottomColor: `${typeConfig.color}33` }}>
         <div className="panel-badge" style={{ background: `${typeConfig.color}22`, color: typeConfig.color }}>
           {typeConfig.label}
         </div>
         <div className="panel-actions">
-          <button className="icon-btn danger" onClick={() => deleteNode(selectedNodeId)} title="Eliminar parte">
+          <button className="icon-btn danger" onClick={() => deleteNode(selectedNodeId)} title="Eliminar">
             <Trash2 size={15} />
           </button>
           <button className="icon-btn" onClick={closePanel}>
@@ -33,8 +61,6 @@ export default function PartPanel() {
       </div>
 
       <div className="panel-body">
-
-        {/* Identidad */}
         <div className="panel-section-title">Identidad</div>
 
         <div className="field-row">
@@ -70,7 +96,6 @@ export default function PartPanel() {
           <input type="text" value={data.emotion ?? ''} onChange={update('emotion')} placeholder="Ej: Miedo, vergüenza, orgullo..." />
         </div>
 
-        {/* Origen */}
         <div className="panel-section-title">Origen</div>
 
         <div className="field-group">
@@ -83,7 +108,6 @@ export default function PartPanel() {
           <textarea value={data.activadores ?? ''} onChange={update('activadores')} placeholder="Ej: Cuando me critican, cuando estoy solo..." rows={2} />
         </div>
 
-        {/* Rol */}
         <div className="panel-section-title">Rol en el sistema</div>
 
         <div className="field-group">
@@ -101,7 +125,6 @@ export default function PartPanel() {
           <input type="text" value={data.polarizada ?? ''} onChange={update('polarizada')} placeholder="Ej: La parte que quiere ser auténtico" />
         </div>
 
-        {/* Mundo interior */}
         <div className="panel-section-title">Mundo interior</div>
 
         <div className="field-group">
@@ -128,24 +151,6 @@ export default function PartPanel() {
           <label>Notas / observaciones</label>
           <textarea value={data.notes ?? ''} onChange={update('notes')} placeholder="Cualquier otra cosa relevante..." rows={3} />
         </div>
-
-      </div>
-
-      <div className="panel-legend">
-        <div className="legend-title">Tipos de partes</div>
-        {Object.entries(PART_TYPES).map(([key, val]) => (
-          <div key={key} className="legend-item">
-            <span className="legend-dot" style={{ background: val.color }} />
-            <span className="legend-name" style={{ color: val.color }}>{val.label}</span>
-            <span className="legend-desc">
-              {key === 'self' && '— Centro, presencia pura'}
-              {key === 'manager' && '— Previene el dolor'}
-              {key === 'firefighter' && '— Reacciona al dolor'}
-              {key === 'exile' && '— Lleva el dolor'}
-              {key === 'protector' && '— Protege al exiliado'}
-            </span>
-          </div>
-        ))}
       </div>
     </div>
   )

@@ -374,3 +374,37 @@ html, body, #root {
 
 .flex-1 { flex: 1; }
 .flex-2 { flex: 2; }
+
+/* Panel flotante */
+.part-panel-float {
+  position: fixed;
+  top: 60px;
+  left: 80px;
+  width: 320px;
+  max-height: 85vh;
+  background: #0f0d18ee;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+  box-shadow: 0 24px 64px #00000088;
+  animation: floatIn 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes floatIn {
+  from { transform: scale(0.96) translateY(8px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.panel-drag-handle {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0 2px;
+  cursor: grab;
+  user-select: none;
+}
+
+.panel-drag-handle:active { cursor: grabbing; }
