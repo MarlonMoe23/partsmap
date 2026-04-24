@@ -706,16 +706,22 @@ html, body, #root {
 /* Fix zoom controls en móvil */
 @media (max-width: 768px) {
   .react-flow__controls {
-    bottom: 24px !important;
+    position: fixed !important;
+    bottom: 80px !important;
     left: 16px !important;
     top: auto !important;
+    right: auto !important;
   }
 
   .react-flow__minimap {
-    bottom: 24px !important;
-    right: 16px !important;
+    position: fixed !important;
+    bottom: 80px !important;
+    right: 12px !important;
+    left: auto !important;
     top: auto !important;
-    width: 80px !important;
-    height: 60px !important;
+    width: 90px !important;
+    height: 70px !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
   }
 }

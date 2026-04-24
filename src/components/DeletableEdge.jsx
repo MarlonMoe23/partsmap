@@ -14,12 +14,6 @@ export default function DeletableEdge({
     targetX, targetY, targetPosition,
   })
 
-  const handleDelete = (e) => {
-    e.stopPropagation()
-    e.preventDefault()
-    deleteEdge(id)
-  }
-
   return (
     <>
       <BaseEdge path={edgePath} style={style} animated={animated} markerEnd={markerEnd} />
@@ -32,14 +26,14 @@ export default function DeletableEdge({
             zIndex: 100,
           }}
           className="nodrag nopan"
-          onPointerDown={handleDelete}
         >
-          <div
+          <button
             className="edge-delete-btn"
             style={{ borderColor: isPolar ? '#ef444466' : '#ffffff33' }}
+            onClick={(e) => { e.stopPropagation(); deleteEdge(id) }}
           >
             <X size={10} />
-          </div>
+          </button>
         </div>
       </EdgeLabelRenderer>
     </>
