@@ -666,10 +666,10 @@ html, body, #root {
   opacity: 1;
 }
 
-/* En móvil siempre visible */
+/* En móvil ocultar la X de edges */
 @media (max-width: 768px) {
-  .edge-delete-wrapper {
-    opacity: 1;
+  .edge-delete-btn {
+    display: none;
   }
 }
 
@@ -707,7 +707,7 @@ html, body, #root {
 @media (max-width: 768px) {
   .react-flow__controls {
     position: fixed !important;
-    bottom: 80px !important;
+    bottom: 16px !important;
     left: 16px !important;
     top: auto !important;
     right: auto !important;
@@ -715,7 +715,7 @@ html, body, #root {
 
   .react-flow__minimap {
     position: fixed !important;
-    bottom: 80px !important;
+    bottom: 16px !important;
     right: 12px !important;
     left: auto !important;
     top: auto !important;
