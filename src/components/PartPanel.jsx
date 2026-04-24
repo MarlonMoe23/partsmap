@@ -40,7 +40,7 @@ export default function PartPanel() {
   return (
     <div
       className="part-panel-float"
-      style={{ left: pos.x, top: pos.y, borderColor: `${typeConfig.color}44` }}
+      style={{ '--panel-color': typeConfig.color, left: pos.x, top: pos.y, borderColor: `${typeConfig.color}44` }}
     >
       {/* Drag handle */}
       <div className="panel-drag-handle" onMouseDown={onMouseDown}>

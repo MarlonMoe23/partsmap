@@ -495,3 +495,124 @@ html, body, #root {
 }
 
 .shake { animation: shake 0.4s ease; }
+
+/* ─── Mobile ─────────────────────────────────────────── */
+
+.mobile-menu-btn {
+  display: none;
+}
+
+.sidebar-close-btn {
+  display: none;
+}
+
+.mobile-overlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+
+  /* Sidebar oculta por defecto, desliza desde la izquierda */
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: 60;
+    box-shadow: 4px 0 32px #00000066;
+  }
+
+  .sidebar-mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-close-btn {
+    display: flex;
+  }
+
+  .mobile-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: #00000055;
+    z-index: 55;
+    backdrop-filter: blur(2px);
+  }
+
+  /* Botón hamburger visible */
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 40;
+    width: 40px;
+    height: 40px;
+    background: #1a162588;
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  /* Canvas ocupa todo */
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .canvas-area {
+    width: 100vw;
+    height: 100vh;
+  }
+
+  /* Panel como bottom sheet en móvil */
+  .part-panel-float {
+    position: fixed !important;
+    left: 0 !important;
+    top: auto !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 75vh;
+    border-radius: 20px 20px 0 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    border-top: 2px solid var(--panel-color, #6366f1) !important;
+    box-shadow: 0 -8px 48px #00000088;
+    animation: slideUp 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  /* Ocultar drag handle en móvil */
+  .panel-drag-handle {
+    display: none;
+  }
+
+  /* Barra de arrastre estética */
+  .part-panel-float::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: #ffffff20;
+    border-radius: 2px;
+    margin: 10px auto 0;
+  }
+
+  /* Password gate en móvil */
+  .gate-box {
+    width: 90%;
+    padding: 32px 24px;
+  }
+}
