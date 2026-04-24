@@ -11,16 +11,19 @@ import { useStore } from './store/useStore'
 import IFSNode from './components/IFSNode'
 import PartPanel from './components/PartPanel'
 import Sidebar from './components/Sidebar'
+import PasswordGate, { useAuth } from './components/PasswordGate'
 
 const nodeTypes = { ifsNode: IFSNode }
 
 export default function App() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useStore()
+  const { authed, login } = useAuth()
+
+  if (!authed) return <PasswordGate onAuth={login} />
 
   return (
     <div className="app-shell">
       <Sidebar />
-
       <div className="canvas-area">
         <ReactFlow
           nodes={nodes}
@@ -35,39 +38,18 @@ export default function App() {
           minZoom={0.3}
           maxZoom={2}
         >
-          <Background
-            variant={BackgroundVariant.Dots}
-            gap={28}
-            size={1}
-            color="#ffffff09"
-          />
-          <Controls
-            style={{
-              background: '#1a1625',
-              border: '1px solid #ffffff15',
-              borderRadius: '10px',
-            }}
-          />
+          <Background variant={BackgroundVariant.Dots} gap={28} size={1} color="#ffffff09" />
+          <Controls style={{ background: '#1a1625', border: '1px solid #ffffff15', borderRadius: '10px' }} />
           <MiniMap
-            style={{
-              background: '#0f0d16',
-              border: '1px solid #ffffff15',
-            }}
+            style={{ background: '#0f0d16', border: '1px solid #ffffff15' }}
             nodeColor={(n) => {
-              const colors = {
-                self: '#f59e0b',
-                manager: '#6366f1',
-                firefighter: '#ef4444',
-                exile: '#8b5cf6',
-                protector: '#10b981',
-              }
+              const colors = { self: '#f59e0b', manager: '#6366f1', firefighter: '#ef4444', exile: '#8b5cf6' }
               return colors[n.data?.partType] ?? '#6366f1'
             }}
             maskColor="#0f0d1688"
           />
         </ReactFlow>
       </div>
-
       <PartPanel />
     </div>
   )

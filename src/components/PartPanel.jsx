@@ -12,6 +12,7 @@ export default function PartPanel() {
 
   if (!panelOpen || !selectedNodeId) return null
   const node = nodes.find((n) => n.id === selectedNodeId)
+  const isSelf = node?.data?.partType === 'self'
   if (!node) return null
 
   const { data } = node
@@ -51,9 +52,11 @@ export default function PartPanel() {
           {typeConfig.label}
         </div>
         <div className="panel-actions">
-          <button className="icon-btn danger" onClick={() => deleteNode(selectedNodeId)} title="Eliminar">
-            <Trash2 size={15} />
-          </button>
+          {!isSelf && (
+            <button className="icon-btn danger" onClick={() => deleteNode(selectedNodeId)} title="Eliminar">
+              <Trash2 size={15} />
+            </button>
+          )}
           <button className="icon-btn" onClick={closePanel}>
             <X size={16} />
           </button>
