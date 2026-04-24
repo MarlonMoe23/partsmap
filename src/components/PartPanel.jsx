@@ -128,6 +128,11 @@ export default function PartPanel() {
           <input type="text" value={data.polarizada ?? ''} onChange={update('polarizada')} placeholder="Ej: La parte que quiere ser auténtico" />
         </div>
 
+        <div className="field-group">
+          <label>Estrategias que usa</label>
+          <textarea value={data.estrategias ?? ''} onChange={update('estrategias')} placeholder="Ej: Me hace procrastinar, me llena de autocrítica, me aísla..." rows={2} />
+        </div>
+
         <div className="panel-section-title">Mundo interior</div>
 
         <div className="field-group">
