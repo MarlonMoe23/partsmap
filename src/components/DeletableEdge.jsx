@@ -32,16 +32,14 @@ export default function DeletableEdge({
             zIndex: 100,
           }}
           className="nodrag nopan"
+          onPointerDown={handleDelete}
         >
-          <button
+          <div
             className="edge-delete-btn"
             style={{ borderColor: isPolar ? '#ef444466' : '#ffffff33' }}
-            onClick={handleDelete}
-            onTouchEnd={handleDelete}
-            title="Borrar conexión"
           >
             <X size={10} />
-          </button>
+          </div>
         </div>
       </EdgeLabelRenderer>
     </>
