@@ -10,11 +10,13 @@ import '@xyflow/react/dist/style.css'
 
 import { useStore } from './store/useStore'
 import IFSNode from './components/IFSNode'
+import DeletableEdge from './components/DeletableEdge'
 import PartPanel from './components/PartPanel'
 import Sidebar from './components/Sidebar'
 import PasswordGate, { useAuth } from './components/PasswordGate'
 
 const nodeTypes = { ifsNode: IFSNode }
+const edgeTypes = { default: DeletableEdge }
 
 export default function App() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, loadFromDB, loading } = useStore()
@@ -44,11 +46,13 @@ export default function App() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           fitView
           fitViewOptions={{ padding: 0.3 }}
           proOptions={{ hideAttribution: true }}
           minZoom={0.3}
           maxZoom={2}
+          deleteKeyCode={['Backspace', 'Delete']}
         >
           <Background variant={BackgroundVariant.Dots} gap={28} size={1} color="#ffffff09" />
           <Controls style={{ background: '#1a1625', border: '1px solid #ffffff15', borderRadius: '10px' }} />
