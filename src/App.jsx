@@ -19,7 +19,7 @@ const nodeTypes = { ifsNode: IFSNode }
 const edgeTypes = { default: DeletableEdge }
 
 export default function App() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, loadFromDB, loading } = useStore()
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, loadFromDB, loading, closePanel } = useStore()
   const { authed, login } = useAuth()
 
   useEffect(() => {
@@ -53,6 +53,7 @@ export default function App() {
           minZoom={0.3}
           maxZoom={2}
           deleteKeyCode={['Backspace', 'Delete']}
+          onPaneClick={closePanel}
         >
           <Background variant={BackgroundVariant.Dots} gap={28} size={1} color="#ffffff09" />
           <Controls style={{ background: '#1a1625', border: '1px solid #ffffff15', borderRadius: '10px' }} />
