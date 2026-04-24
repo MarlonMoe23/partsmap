@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-const PASSWORD = '23080913'  // ← cambia esto por tu clave
+const PASSWORD = '0913*'
 
 const KEY = 'ifs-auth'
 
