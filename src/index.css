@@ -351,3 +351,26 @@ html, body, #root {
 }
 
 .react-flow__controls-button:hover { background: #ffffff10 !important; }
+
+.panel-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffffff30;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+.field-row {
+  display: flex;
+  gap: 10px;
+}
+
+.field-row .field-group {
+  min-width: 0;
+}
+
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
