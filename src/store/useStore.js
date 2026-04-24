@@ -137,8 +137,17 @@ export const useStore = create((set, get) => ({
     })
   },
 
-  onEdgesChange: (changes) => {
+  onEdgesChange: async (changes) => {
+    const removed = changes.filter((c) => c.type === 'remove')
     set({ edges: applyEdgeChanges(changes, get().edges) })
+    for (const c of removed) {
+      await supabase.from('edges').delete().eq('id', c.id)
+    }
+  },
+
+  deleteEdge: async (id) => {
+    set({ edges: get().edges.filter((e) => e.id !== id) })
+    await supabase.from('edges').delete().eq('id', id)
   },
 
   onConnect: async (connection) => {
