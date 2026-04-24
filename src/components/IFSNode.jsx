@@ -19,7 +19,13 @@ const IFSNode = memo(({ id, data, selected }) => {
       }}
       onClick={() => selectNode(id)}
     >
-      <Handle type="target" position={Position.Top} className="ifs-handle" />
+      {/* Handles arriba/abajo — conexión normal */}
+      <Handle type="target" position={Position.Top} id="top" className="ifs-handle" />
+      <Handle type="source" position={Position.Bottom} id="bottom" className="ifs-handle" />
+
+      {/* Handles izquierda/derecha — polarización */}
+      <Handle type="source" position={Position.Left} id="left" className="ifs-handle ifs-handle-polar" />
+      <Handle type="target" position={Position.Right} id="right" className="ifs-handle ifs-handle-polar" />
 
       <div className="node-type-badge" style={{ background: `${typeConfig.color}22`, color: typeConfig.color }}>
         {typeConfig.label}
@@ -30,8 +36,6 @@ const IFSNode = memo(({ id, data, selected }) => {
       {data.emotion && (
         <div className="node-emotion">{data.emotion}</div>
       )}
-
-      <Handle type="source" position={Position.Bottom} className="ifs-handle" />
     </div>
   )
 })

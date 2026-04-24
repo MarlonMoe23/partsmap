@@ -100,13 +100,21 @@ export const useStore = create((set, get) => ({
       return
     }
 
-    const flowEdges = (edges ?? []).map((e) => ({
-      id: e.id,
-      source: e.source,
-      target: e.target,
-      animated: true,
-      style: { stroke: '#ffffff22', strokeWidth: 1.5 },
-    }))
+    const flowEdges = (edges ?? []).map((e) => {
+      const isPolar = e.source_handle === 'left' || e.source_handle === 'right'
+        || e.target_handle === 'left' || e.target_handle === 'right'
+      return {
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        sourceHandle: e.source_handle ?? null,
+        targetHandle: e.target_handle ?? null,
+        animated: isPolar,
+        style: isPolar
+          ? { stroke: '#ef4444', strokeWidth: 2 }
+          : { stroke: '#ffffff22', strokeWidth: 1.5 },
+      }
+    })
 
     set({ nodes, edges: flowEdges, loading: false })
   },
@@ -134,18 +142,29 @@ export const useStore = create((set, get) => ({
   },
 
   onConnect: async (connection) => {
+    const isPolar = connection.sourceHandle === 'left' || connection.sourceHandle === 'right'
+      || connection.targetHandle === 'left' || connection.targetHandle === 'right'
+
     const newEdge = {
       id: `e-${Date.now()}`,
       source: connection.source,
       target: connection.target,
-      animated: true,
-      style: { stroke: '#ffffff22', strokeWidth: 1.5 },
+      sourceHandle: connection.sourceHandle,
+      targetHandle: connection.targetHandle,
+      animated: isPolar,
+      type: isPolar ? 'default' : 'default',
+      style: isPolar
+        ? { stroke: '#ef4444', strokeWidth: 2 }
+        : { stroke: '#ffffff22', strokeWidth: 1.5 },
+      data: { polar: isPolar },
     }
     set({ edges: [...get().edges, newEdge] })
     await supabase.from('edges').insert({
       id: newEdge.id,
       source: newEdge.source,
       target: newEdge.target,
+      source_handle: connection.sourceHandle ?? null,
+      target_handle: connection.targetHandle ?? null,
     })
   },
 

@@ -643,3 +643,14 @@ html, body, #root {
   0%, 100% { opacity: 0.2; transform: scale(0.8); }
   50% { opacity: 1; transform: scale(1.2); }
 }
+
+/* Handles de polarización (izquierda/derecha) */
+.ifs-handle-polar {
+  background: #ef444433 !important;
+  border-color: #ef444466 !important;
+}
+
+.ifs-handle-polar:hover {
+  background: #ef4444aa !important;
+  border-color: #ef4444 !important;
+}
