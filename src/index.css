@@ -42,6 +42,13 @@ html, body, #root {
   flex: 1;
   height: 100%;
   position: relative;
+background-color: #f7f7f9;
+  background-image:
+    linear-gradient(#00000010 1px, transparent 1px),
+    linear-gradient(90deg, #00000010 1px, transparent 1px);
+  background-size: 24px 24px;
+
+
 }
 
 /* ─── Sidebar ─────────────────────────────────────── */
