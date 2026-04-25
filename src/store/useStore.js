@@ -111,8 +111,8 @@ export const useStore = create((set, get) => ({
         targetHandle: e.target_handle ?? null,
         animated: isPolar,
         style: isPolar
-          ? { stroke: '#ef4444', strokeWidth: 2 }
-          : { stroke: '#ffffff22', strokeWidth: 1.5 },
+          ? { stroke: '#cc3333', strokeWidth: 2, strokeDasharray: '6 3' }
+          : { stroke: '#e8a000', strokeWidth: 2.5 },
       }
     })
 
@@ -163,8 +163,8 @@ export const useStore = create((set, get) => ({
       animated: isPolar,
       type: isPolar ? 'default' : 'default',
       style: isPolar
-        ? { stroke: '#ef4444', strokeWidth: 2 }
-        : { stroke: '#ffffff22', strokeWidth: 1.5 },
+        ? { stroke: '#cc3333', strokeWidth: 2, strokeDasharray: '6 3' }
+        : { stroke: '#e8a000', strokeWidth: 2.5 },
       data: { polar: isPolar },
     }
     set({ edges: [...get().edges, newEdge] })
