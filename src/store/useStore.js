@@ -9,53 +9,55 @@ export const PART_TYPES = {
   exile:       { label: 'Exile',       color: '#4a9aba', glow: '#4a9aba22' },
 }
 
+// Convierte una fila de Supabase → nodo de React Flow
 function rowToNode(row) {
   return {
     id: row.id,
     type: 'ifsNode',
     position: { x: row.position_x ?? 0, y: row.position_y ?? 0 },
     data: {
-      label: row.label ?? '',
-      partType: row.part_type ?? 'manager',
-      emotion: row.emotion ?? '',
-      role: row.role ?? '',
-      message: row.message ?? '',
-      notes: row.notes ?? '',
-      age: row.age ?? '',
-      estado: row.estado ?? 'Desconocido',
-      origen: row.origen ?? '',
+      label:       row.label       ?? '',
+      partType:    row.part_type   ?? 'manager',
+      emotion:     row.emotion     ?? '',
+      role:        row.role        ?? '',
+      message:     row.message     ?? '',
+      notes:       row.notes       ?? '',
+      age:         row.age         ?? '',
+      estado:      row.estado      ?? 'Desconocido',
+      origen:      row.origen      ?? '',
       activadores: row.activadores ?? '',
-      protege: row.protege ?? '',
-      polarizada: row.polarizada ?? '',
-      teme: row.teme ?? '',
-      quiere: row.quiere ?? '',
-      necesita: row.necesita ?? '',
+      protege:     row.protege     ?? '',
+      polarizada:  row.polarizada  ?? '',
+      teme:        row.teme        ?? '',
+      quiere:      row.quiere      ?? '',
+      necesita:    row.necesita    ?? '',
       estrategias: row.estrategias ?? '',
     },
   }
 }
 
+// Convierte un nodo de React Flow → fila de Supabase
 function nodeToRow(node) {
   return {
-    id: node.id,
-    label: node.data.label,
-    part_type: node.data.partType,
-    emotion: node.data.emotion,
-    role: node.data.role,
-    message: node.data.message,
-    notes: node.data.notes,
-    age: node.data.age,
-    estado: node.data.estado,
-    origen: node.data.origen,
-    activadores: node.data.activadores,
-    protege: node.data.protege,
-    polarizada: node.data.polarizada,
-    teme: node.data.teme,
-    quiere: node.data.quiere,
-    necesita: node.data.necesita,
-    estrategias: node.data.estrategias,
-    position_x: node.position.x,
-    position_y: node.position.y,
+    id:           node.id,
+    label:        node.data.label,
+    part_type:    node.data.partType,
+    emotion:      node.data.emotion,
+    role:         node.data.role,
+    message:      node.data.message,
+    notes:        node.data.notes,
+    age:          node.data.age,
+    estado:       node.data.estado,
+    origen:       node.data.origen,
+    activadores:  node.data.activadores,
+    protege:      node.data.protege,
+    polarizada:   node.data.polarizada,
+    teme:         node.data.teme,
+    quiere:       node.data.quiere,
+    necesita:     node.data.necesita,
+    estrategias:  node.data.estrategias,
+    position_x:   node.position.x,
+    position_y:   node.position.y,
   }
 }
 
@@ -67,13 +69,18 @@ export const useStore = create((set, get) => ({
   loading: true,
   partTypes: PART_TYPES,
 
+  // ── Carga inicial desde Supabase ──────────────────────
   loadFromDB: async () => {
     set({ loading: true })
+
     const [{ data: parts }, { data: edges }] = await Promise.all([
       supabase.from('parts').select('*'),
       supabase.from('edges').select('*'),
     ])
+
     const nodes = (parts ?? []).map(rowToNode)
+
+    // Si no hay nada en DB, creamos el nodo Self inicial
     if (nodes.length === 0) {
       const selfNode = {
         id: 'self-1',
@@ -92,6 +99,7 @@ export const useStore = create((set, get) => ({
       set({ nodes: [selfNode], edges: [], loading: false })
       return
     }
+
     const flowEdges = (edges ?? []).map((e) => {
       const isPolar = e.source_handle === 'left' || e.source_handle === 'right'
         || e.target_handle === 'left' || e.target_handle === 'right'
@@ -103,16 +111,20 @@ export const useStore = create((set, get) => ({
         targetHandle: e.target_handle ?? null,
         animated: isPolar,
         style: isPolar
-          ? { stroke: '#cc3333', strokeWidth: 2 }
-          : { stroke: '#00000018', strokeWidth: 1.5 },
+          ? { stroke: '#ef4444', strokeWidth: 2 }
+          : { stroke: '#ffffff22', strokeWidth: 1.5 },
       }
     })
+
     set({ nodes, edges: flowEdges, loading: false })
   },
 
+  // ── Cambios de posición (drag) ────────────────────────
   onNodesChange: (changes) => {
     const nodes = applyNodeChanges(changes, get().nodes)
     set({ nodes })
+
+    // Guarda posición en Supabase solo al soltar (type: 'position' + !dragging)
     const posChanges = changes.filter((c) => c.type === 'position' && c.dragging === false)
     posChanges.forEach(async (c) => {
       const node = nodes.find((n) => n.id === c.id)
@@ -141,6 +153,7 @@ export const useStore = create((set, get) => ({
   onConnect: async (connection) => {
     const isPolar = connection.sourceHandle === 'left' || connection.sourceHandle === 'right'
       || connection.targetHandle === 'left' || connection.targetHandle === 'right'
+
     const newEdge = {
       id: `e-${Date.now()}`,
       source: connection.source,
@@ -148,9 +161,11 @@ export const useStore = create((set, get) => ({
       sourceHandle: connection.sourceHandle,
       targetHandle: connection.targetHandle,
       animated: isPolar,
+      type: isPolar ? 'default' : 'default',
       style: isPolar
-        ? { stroke: '#cc3333', strokeWidth: 2 }
-        : { stroke: '#00000018', strokeWidth: 1.5 },
+        ? { stroke: '#ef4444', strokeWidth: 2 }
+        : { stroke: '#ffffff22', strokeWidth: 1.5 },
+      data: { polar: isPolar },
     }
     set({ edges: [...get().edges, newEdge] })
     await supabase.from('edges').insert({
@@ -165,6 +180,7 @@ export const useStore = create((set, get) => ({
   selectNode: (id) => set({ selectedNodeId: id, panelOpen: true }),
   closePanel: () => set({ panelOpen: false, selectedNodeId: null }),
 
+  // ── Agregar parte ─────────────────────────────────────
   addPart: async (partType = 'manager') => {
     const id = `part-${Date.now()}`
     const newNode = {
@@ -183,15 +199,18 @@ export const useStore = create((set, get) => ({
     await supabase.from('parts').insert(nodeToRow(newNode))
   },
 
+  // ── Actualizar datos de una parte ─────────────────────
   updateNodeData: async (id, data) => {
     const nodes = get().nodes.map((n) =>
       n.id === id ? { ...n, data: { ...n.data, ...data } } : n
     )
     set({ nodes })
+
     const node = nodes.find((n) => n.id === id)
     await supabase.from('parts').update(nodeToRow(node)).eq('id', id)
   },
 
+  // ── Eliminar parte ────────────────────────────────────
   deleteNode: async (id) => {
     set({
       nodes: get().nodes.filter((n) => n.id !== id),
