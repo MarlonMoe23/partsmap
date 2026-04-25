@@ -3,10 +3,10 @@ import { applyNodeChanges, applyEdgeChanges } from '@xyflow/react'
 import { supabase } from '../supabase'
 
 export const PART_TYPES = {
-  self:        { label: 'Self',        color: '#f59e0b', glow: '#f59e0b44' },
-  manager:     { label: 'Manager',     color: '#6366f1', glow: '#6366f144' },
-  firefighter: { label: 'Firefighter', color: '#ef4444', glow: '#ef444444' },
-  exile:       { label: 'Exile',       color: '#8b5cf6', glow: '#8b5cf644' },
+  self:        { label: 'Self',        color: '#c9a96e', glow: '#c9a96e22' },
+  manager:     { label: 'Manager',     color: '#6b8cae', glow: '#6b8cae22' },
+  firefighter: { label: 'Firefighter', color: '#a0655a', glow: '#a0655a22' },
+  exile:       { label: 'Exile',       color: '#8a7a9b', glow: '#8a7a9b22' },
 }
 
 // Convierte una fila de Supabase → nodo de React Flow
