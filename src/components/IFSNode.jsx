@@ -5,17 +5,27 @@ import { useStore } from '../store/useStore'
 const IFSNode = memo(({ id, data, selected }) => {
   const { partTypes, selectNode } = useStore()
   const typeConfig = partTypes[data.partType] ?? partTypes.manager
+  const isSelf = data.partType === 'self'
+
+  const nodeStyle = isSelf ? {
+    background: '#ffffff',
+    borderColor: selected ? typeConfig.color : `${typeConfig.color}88`,
+    borderLeftWidth: '3px',
+    boxShadow: selected
+      ? `0 0 0 1px ${typeConfig.color}44, 0 4px 24px ${typeConfig.glow}`
+      : '0 2px 12px #00000018',
+  } : {
+    background: typeConfig.color,
+    borderColor: selected ? '#00000033' : `${typeConfig.color}`,
+    boxShadow: selected
+      ? `0 0 0 2px ${typeConfig.color}, 0 4px 24px ${typeConfig.glow}`
+      : '0 2px 12px #00000022',
+  }
 
   return (
     <div
       className="ifs-node"
-      style={{
-        borderColor: selected ? typeConfig.color : `${typeConfig.color}88`,
-        borderLeftWidth: '3px',
-        boxShadow: selected
-          ? `0 0 0 1px ${typeConfig.color}44, 0 4px 24px ${typeConfig.glow}`
-          : '0 2px 12px #00000018',
-      }}
+      style={nodeStyle}
       onClick={() => selectNode(id)}
     >
       <Handle type="target" position={Position.Top} id="top" className="ifs-handle" />
@@ -23,8 +33,14 @@ const IFSNode = memo(({ id, data, selected }) => {
       <Handle type="source" position={Position.Left} id="left" className="ifs-handle ifs-handle-polar" />
       <Handle type="target" position={Position.Right} id="right" className="ifs-handle ifs-handle-polar" />
 
-      <div className="node-label">{data.label}</div>
-      {data.emotion && <div className="node-emotion">{data.emotion}</div>}
+      <div className="node-label" style={{ color: isSelf ? 'var(--text)' : '#ffffff' }}>
+        {data.label}
+      </div>
+      {data.emotion && (
+        <div className="node-emotion" style={{ color: isSelf ? 'var(--text-muted)' : '#ffffffbb' }}>
+          {data.emotion}
+        </div>
+      )}
     </div>
   )
 })
