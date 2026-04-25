@@ -8,12 +8,12 @@ const IFSNode = memo(({ id, data, selected }) => {
   const isSelf = data.partType === 'self'
 
   const nodeStyle = isSelf ? {
-    background: '#ffffff',
-    borderColor: selected ? typeConfig.color : `${typeConfig.color}88`,
-    borderLeftWidth: '3px',
+    background: '#fdf6e9',
+    borderColor: selected ? typeConfig.color : `${typeConfig.color}`,
+    borderWidth: '2px',
     boxShadow: selected
-      ? `0 0 0 1px ${typeConfig.color}44, 0 4px 24px ${typeConfig.glow}`
-      : '0 2px 12px #00000018',
+      ? `0 0 0 2px ${typeConfig.color}66, 0 4px 24px ${typeConfig.glow}`
+      : `0 2px 16px ${typeConfig.glow}, 0 0 0 1px ${typeConfig.color}44`,
   } : {
     background: typeConfig.color,
     borderColor: selected ? '#00000033' : `${typeConfig.color}`,
