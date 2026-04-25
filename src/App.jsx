@@ -60,8 +60,8 @@ export default function App() {
           <MiniMap
             style={{ background: '#0f0d16', border: '1px solid #ffffff15' }}
             nodeColor={(n) => {
-              const colors = { self: '#f59e0b', manager: '#6366f1', firefighter: '#ef4444', exile: '#8b5cf6' }
-              return colors[n.data?.partType] ?? '#6366f1'
+              const colors = { self: '#c9a050', manager: '#e07830', firefighter: '#cc3333', exile: '#4a9aba' }
+              return colors[n.data?.partType] ?? '#e07830'
             }}
             maskColor="#0f0d1688"
           />
