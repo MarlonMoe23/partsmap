@@ -36,10 +36,15 @@ const IFSNode = memo(({ id, data, selected }) => {
       <div className="node-label" style={{ color: isSelf ? 'var(--text)' : '#ffffff' }}>
         {data.label}
       </div>
-      {data.emotion && (
-        <div className="node-emotion" style={{ color: isSelf ? 'var(--text-muted)' : '#ffffffbb' }}>
-          {data.emotion}
-        </div>
+      
+
+{/* {data.emotion && (
+  <div className="node-emotion" style={{ color: isSelf ? 'var(--text-muted)' : '#ffffffbb' }}>
+    {data.emotion}
+  </div>
+)} */}
+
+
       )}
     </div>
   )
