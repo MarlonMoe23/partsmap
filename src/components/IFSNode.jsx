@@ -45,7 +45,7 @@ const IFSNode = memo(({ id, data, selected }) => {
 )} */}
 
 
-      )}
+      
     </div>
   )
 })
