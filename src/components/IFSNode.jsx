@@ -23,11 +23,25 @@ const IFSNode = memo(({ id, data, selected }) => {
   }
 
   return (
-    <div
-      className="ifs-node"
-      style={nodeStyle}
-      onClick={() => selectNode(id)}
-    >
+    
+
+
+<div
+  className="ifs-node"
+  style={{
+    ...nodeStyle,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center'
+  }}
+  onClick={() => selectNode(id)}
+>
+
+
+
+
       <Handle type="target" position={Position.Top} id="top" className="ifs-handle" />
       <Handle type="source" position={Position.Bottom} id="bottom" className="ifs-handle" />
       <Handle type="source" position={Position.Left} id="left" className="ifs-handle ifs-handle-polar" />
