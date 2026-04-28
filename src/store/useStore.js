@@ -102,8 +102,7 @@ export const useStore = create((set, get) => ({
     }
 
     const flowEdges = (edges ?? []).map((e) => {
-      const isPolar = e.source_handle === 'left' || e.source_handle === 'right'
-        || e.target_handle === 'left' || e.target_handle === 'right'
+      const isPolar = e.edge_type === 'polarization'
       return {
         id: e.id,
         source: e.source,
@@ -112,8 +111,8 @@ export const useStore = create((set, get) => ({
         targetHandle: e.target_handle ?? null,
         animated: isPolar,
         style: isPolar
-          ? { stroke: '#cc3333', strokeWidth: 2, strokeDasharray: '6 3' }
-          : { stroke: '#e8a000', strokeWidth: 2.5 },
+          ? { stroke: '#cc3333', strokeWidth: 2 }
+          : { stroke: '#e8a800', strokeWidth: 2 },
       }
     })
 
@@ -151,32 +150,38 @@ export const useStore = create((set, get) => ({
     await supabase.from('edges').delete().eq('id', id)
   },
 
-  onConnect: async (connection) => {
-    const isPolar = connection.sourceHandle === 'left' || connection.sourceHandle === 'right'
-      || connection.targetHandle === 'left' || connection.targetHandle === 'right'
+  onConnect: (connection) => {
+    set({ pendingEdge: { connection } })
+  },
 
+  confirmEdge: async (type) => {
+    const { pendingEdge } = get()
+    if (!pendingEdge) return
+    const { connection } = pendingEdge
+    const isPolar = type === 'polarization'
     const newEdge = {
       id: `e-${Date.now()}`,
       source: connection.source,
       target: connection.target,
-      sourceHandle: connection.sourceHandle,
-      targetHandle: connection.targetHandle,
+      sourceHandle: connection.sourceHandle ?? null,
+      targetHandle: connection.targetHandle ?? null,
       animated: isPolar,
-      type: isPolar ? 'default' : 'default',
       style: isPolar
-        ? { stroke: '#cc3333', strokeWidth: 2, strokeDasharray: '6 3' }
-        : { stroke: '#e8a000', strokeWidth: 2.5 },
-      data: { polar: isPolar },
+        ? { stroke: '#cc3333', strokeWidth: 2 }
+        : { stroke: '#e8a800', strokeWidth: 2 },
     }
-    set({ edges: [...get().edges, newEdge] })
+    set({ edges: [...get().edges, newEdge], pendingEdge: null })
     await supabase.from('edges').insert({
       id: newEdge.id,
       source: newEdge.source,
       target: newEdge.target,
       source_handle: connection.sourceHandle ?? null,
       target_handle: connection.targetHandle ?? null,
+      edge_type: type,
     })
   },
+
+  cancelEdge: () => set({ pendingEdge: null }),
 
   selectNode: (id) => set({ selectedNodeId: id, panelOpen: true }),
   closePanel: () => set({ panelOpen: false, selectedNodeId: null }),
