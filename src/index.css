@@ -642,3 +642,66 @@ html, body, #root {
 
   .edge-delete-btn { display: none; }
 }
+
+/* Edge type chooser */
+.edge-chooser-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+}
+
+.edge-chooser {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border3);
+  border-radius: 12px;
+  padding: 14px;
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 8px 32px #00000022;
+  animation: floatIn 0.15s ease;
+}
+
+.edge-chooser-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+
+.edge-chooser-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 9px 12px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  transition: background 0.15s, border-color 0.15s;
+  text-align: left;
+}
+
+.edge-chooser-btn:hover { background: var(--surface3); border-color: var(--border3); }
+
+.edge-chooser-line {
+  display: block;
+  width: 28px;
+  height: 2px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.connection-line { background: #e8a800; }
+.polarization-line {
+  background: transparent;
+  border-top: 2px dashed #cc3333;
+  height: 0;
+}

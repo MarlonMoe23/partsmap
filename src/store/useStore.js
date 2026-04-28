@@ -68,6 +68,7 @@ export const useStore = create((set, get) => ({
   panelOpen: false,
   loading: true,
   partTypes: PART_TYPES,
+  pendingEdge: null,
 
   // ── Carga inicial desde Supabase ──────────────────────
   loadFromDB: async () => {

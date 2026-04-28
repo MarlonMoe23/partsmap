@@ -23,43 +23,31 @@ const IFSNode = memo(({ id, data, selected }) => {
   }
 
   return (
-    
-
-
-<div
-  className="ifs-node"
-  style={{
-    ...nodeStyle,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    textAlign: 'center'
-  }}
-  onClick={() => selectNode(id)}
->
-
-
-
-
-      <Handle type="target" position={Position.Top} id="top" className="ifs-handle" />
+    <div
+      className="ifs-node"
+      style={{
+        ...nodeStyle,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center'
+      }}
+      onClick={() => selectNode(id)}
+    >
+      {/* Todos los handles son source Y target */}
+      <Handle type="source" position={Position.Top} id="top" className="ifs-handle" />
+      <Handle type="target" position={Position.Top} id="top-t" className="ifs-handle" style={{ opacity: 0, pointerEvents: 'none' }} />
       <Handle type="source" position={Position.Bottom} id="bottom" className="ifs-handle" />
-      <Handle type="source" position={Position.Left} id="left" className="ifs-handle ifs-handle-polar" />
-      <Handle type="target" position={Position.Right} id="right" className="ifs-handle ifs-handle-polar" />
+      <Handle type="target" position={Position.Bottom} id="bottom-t" className="ifs-handle" style={{ opacity: 0, pointerEvents: 'none' }} />
+      <Handle type="source" position={Position.Left} id="left" className="ifs-handle" />
+      <Handle type="target" position={Position.Left} id="left-t" className="ifs-handle" style={{ opacity: 0, pointerEvents: 'none' }} />
+      <Handle type="source" position={Position.Right} id="right" className="ifs-handle" />
+      <Handle type="target" position={Position.Right} id="right-t" className="ifs-handle" style={{ opacity: 0, pointerEvents: 'none' }} />
 
       <div className="node-label" style={{ color: isSelf ? 'var(--text)' : '#ffffff' }}>
         {data.label}
       </div>
-      
-
-{/* {data.emotion && (
-  <div className="node-emotion" style={{ color: isSelf ? 'var(--text-muted)' : '#ffffffbb' }}>
-    {data.emotion}
-  </div>
-)} */}
-
-
-      
     </div>
   )
 })

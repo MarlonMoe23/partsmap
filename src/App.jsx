@@ -14,6 +14,7 @@ import DeletableEdge from './components/DeletableEdge'
 import PartPanel from './components/PartPanel'
 import Sidebar from './components/Sidebar'
 import PasswordGate, { useAuth } from './components/PasswordGate'
+import EdgeTypeChooser from './components/EdgeTypeChooser'
 
 const nodeTypes = { ifsNode: IFSNode }
 const edgeTypes = { default: DeletableEdge }
@@ -68,6 +69,7 @@ export default function App() {
         </ReactFlow>
       </div>
       <PartPanel />
+      <EdgeTypeChooser />
     </div>
   )
 }
