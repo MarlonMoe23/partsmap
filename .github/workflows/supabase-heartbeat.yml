@@ -1,0 +1,36 @@
+name: Supabase Heartbeat
+
+on:
+  schedule:
+    # Ejecutar cada 3 días a las 06:17 hora de Ecuador
+    - cron: '17 11 */3 * *'
+
+  # Permite ejecutarlo manualmente desde GitHub
+  workflow_dispatch:
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Mantener Supabase activo
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "Enviando heartbeat a Supabase..."
+
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            "${SUPABASE_URL}/rest/v1/parts?select=id&limit=1")
+
+          echo "HTTP Status: ${HTTP_STATUS}"
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "Supabase respondió correctamente."
+            exit 0
+          else
+            echo "Error al contactar Supabase."
+            exit 1
+          fi
