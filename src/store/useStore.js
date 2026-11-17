@@ -1,6 +1,15 @@
 import { create } from 'zustand'
 import { applyNodeChanges, applyEdgeChanges } from '@xyflow/react'
-import { supabase } from '../supabase'
+import {
+  loadAll,
+  savePart,
+  savePartDebounced,
+  savePosition,
+  deletePart,
+  saveEdge,
+  deleteEdgeRemote,
+  setSyncListener,
+} from '../sheets'
 
 export const PART_TYPES = {
   self:        { label: 'Self',        color: '#c9a050', glow: '#c9a05022' },
@@ -9,221 +18,224 @@ export const PART_TYPES = {
   exile:       { label: 'Exile',       color: '#4a9aba', glow: '#4a9aba22' },
 }
 
-// Convierte una fila de Supabase → nodo de React Flow
+// Google Sheets puede devolver números en celdas de texto (ej. edad 7)
+const str = (v) => (v === null || v === undefined ? '' : String(v))
+
+// Convierte una fila de la hoja → nodo de React Flow
 function rowToNode(row) {
   return {
-    id: row.id,
+    id: str(row.id),
     type: 'ifsNode',
-    position: { x: row.position_x ?? 0, y: row.position_y ?? 0 },
+    position: { x: Number(row.position_x) || 0, y: Number(row.position_y) || 0 },
     data: {
-      label:       row.label       ?? '',
-      partType:    row.part_type   ?? 'manager',
-      emotion:     row.emotion     ?? '',
-      role:        row.role        ?? '',
-      message:     row.message     ?? '',
-      notes:       row.notes       ?? '',
-      age:         row.age         ?? '',
-      estado:      row.estado      ?? 'Desconocido',
-      origen:      row.origen      ?? '',
-      activadores: row.activadores ?? '',
-      protege:     row.protege     ?? '',
-      polarizada:  row.polarizada  ?? '',
-      teme:        row.teme        ?? '',
-      quiere:      row.quiere      ?? '',
-      necesita:    row.necesita    ?? '',
-      estrategias: row.estrategias ?? '',
+      label:       str(row.label),
+      partType:    str(row.part_type) || 'manager',
+      emotion:     str(row.emotion),
+      role:        str(row.role),
+      message:     str(row.message),
+      notes:       str(row.notes),
+      age:         str(row.age),
+      estado:      str(row.estado) || 'Desconocido',
+      origen:      str(row.origen),
+      activadores: str(row.activadores),
+      protege:     str(row.protege),
+      polarizada:  str(row.polarizada),
+      teme:        str(row.teme),
+      quiere:      str(row.quiere),
+      necesita:    str(row.necesita),
+      estrategias: str(row.estrategias),
     },
   }
 }
 
-// Convierte un nodo de React Flow → fila de Supabase
-function nodeToRow(node) {
+// Convierte un nodo de React Flow → fila de la hoja.
+// withPosition=false al editar texto: así no pisa una posición más nueva.
+function nodeToRow(node, withPosition = true) {
+  const row = {
+    id:          node.id,
+    label:       node.data.label,
+    part_type:   node.data.partType,
+    emotion:     node.data.emotion,
+    role:        node.data.role,
+    message:     node.data.message,
+    notes:       node.data.notes,
+    age:         node.data.age,
+    estado:      node.data.estado,
+    origen:      node.data.origen,
+    activadores: node.data.activadores,
+    protege:     node.data.protege,
+    polarizada:  node.data.polarizada,
+    teme:        node.data.teme,
+    quiere:      node.data.quiere,
+    necesita:    node.data.necesita,
+    estrategias: node.data.estrategias,
+  }
+  if (withPosition) {
+    row.position_x = node.position.x
+    row.position_y = node.position.y
+  }
+  return row
+}
+
+function makeFlowEdge(e) {
+  const isPolar = e.edge_type === 'polarization'
   return {
-    id:           node.id,
-    label:        node.data.label,
-    part_type:    node.data.partType,
-    emotion:      node.data.emotion,
-    role:         node.data.role,
-    message:      node.data.message,
-    notes:        node.data.notes,
-    age:          node.data.age,
-    estado:       node.data.estado,
-    origen:       node.data.origen,
-    activadores:  node.data.activadores,
-    protege:      node.data.protege,
-    polarizada:   node.data.polarizada,
-    teme:         node.data.teme,
-    quiere:       node.data.quiere,
-    necesita:     node.data.necesita,
-    estrategias:  node.data.estrategias,
-    position_x:   node.position.x,
-    position_y:   node.position.y,
+    id: str(e.id),
+    source: str(e.source),
+    target: str(e.target),
+    sourceHandle: str(e.source_handle) || null,
+    targetHandle: str(e.target_handle) || null,
+    animated: isPolar,
+    style: isPolar
+      ? { stroke: '#cc3333', strokeWidth: 2 }
+      : { stroke: '#e8a800', strokeWidth: 2 },
   }
 }
 
-export const useStore = create((set, get) => ({
-  nodes: [],
-  edges: [],
-  selectedNodeId: null,
-  panelOpen: false,
-  loading: true,
-  partTypes: PART_TYPES,
-  pendingEdge: null,
+export const useStore = create((set, get) => {
+  // El aviso "Guardando…" / error se alimenta desde sheets.js
+  setSyncListener((status) => set({ syncStatus: status }))
 
-  // ── Carga inicial desde Supabase ──────────────────────
-  loadFromDB: async () => {
-    set({ loading: true })
+  return {
+    nodes: [],
+    edges: [],
+    selectedNodeId: null,
+    panelOpen: false,
+    loading: true,
+    loadError: null,
+    syncStatus: 'idle',
+    partTypes: PART_TYPES,
+    pendingEdge: null,
 
-    const [{ data: parts }, { data: edges }] = await Promise.all([
-      supabase.from('parts').select('*'),
-      supabase.from('edges').select('*'),
-    ])
+    // ── Carga inicial desde Google Sheets ────────────────
+    loadFromDB: async () => {
+      set({ loading: true, loadError: null })
+      try {
+        const { parts, edges } = await loadAll()
+        const nodes = parts.map(rowToNode)
 
-    const nodes = (parts ?? []).map(rowToNode)
+        // Si la hoja está vacía, creamos el nodo Self inicial
+        if (nodes.length === 0) {
+          const selfNode = {
+            id: 'self-1',
+            type: 'ifsNode',
+            position: { x: 350, y: 250 },
+            data: {
+              label: 'Self', partType: 'self',
+              emotion: 'Calma, curiosidad, compasión',
+              role: 'Centro de conciencia', message: 'Estoy aquí para todos',
+              notes: '', age: '', estado: 'Desconocido', origen: '',
+              activadores: '', protege: '', polarizada: '',
+              teme: '', quiere: '', necesita: '', estrategias: '',
+            },
+          }
+          savePart(nodeToRow(selfNode))
+          set({ nodes: [selfNode], edges: [], loading: false })
+          return
+        }
 
-    // Si no hay nada en DB, creamos el nodo Self inicial
-    if (nodes.length === 0) {
-      const selfNode = {
-        id: 'self-1',
+        // Ignora conexiones que apunten a partes que ya no existen
+        const ids = new Set(nodes.map((n) => n.id))
+        const flowEdges = edges
+          .map(makeFlowEdge)
+          .filter((e) => ids.has(e.source) && ids.has(e.target))
+
+        set({ nodes, edges: flowEdges, loading: false })
+      } catch (err) {
+        console.error(err)
+        set({ loading: false, loadError: err.message || String(err) })
+      }
+    },
+
+    // ── Cambios de posición (drag) ───────────────────────
+    onNodesChange: (changes) => {
+      const nodes = applyNodeChanges(changes, get().nodes)
+      set({ nodes })
+
+      // Guarda la posición solo al soltar el nodo
+      changes
+        .filter((c) => c.type === 'position' && c.dragging === false)
+        .forEach((c) => {
+          const node = nodes.find((n) => n.id === c.id)
+          if (node) savePosition(node.id, node.position.x, node.position.y)
+        })
+    },
+
+    onEdgesChange: (changes) => {
+      const removed = changes.filter((c) => c.type === 'remove')
+      set({ edges: applyEdgeChanges(changes, get().edges) })
+      removed.forEach((c) => deleteEdgeRemote(c.id))
+    },
+
+    deleteEdge: (id) => {
+      set({ edges: get().edges.filter((e) => e.id !== id) })
+      deleteEdgeRemote(id)
+    },
+
+    onConnect: (connection) => {
+      set({ pendingEdge: { connection } })
+    },
+
+    confirmEdge: (type) => {
+      const { pendingEdge } = get()
+      if (!pendingEdge) return
+      const { connection } = pendingEdge
+      const row = {
+        id: `e-${Date.now()}`,
+        source: connection.source,
+        target: connection.target,
+        source_handle: connection.sourceHandle ?? '',
+        target_handle: connection.targetHandle ?? '',
+        edge_type: type,
+      }
+      set({ edges: [...get().edges, makeFlowEdge(row)], pendingEdge: null })
+      saveEdge(row)
+    },
+
+    cancelEdge: () => set({ pendingEdge: null }),
+
+    selectNode: (id) => set({ selectedNodeId: id, panelOpen: true }),
+    closePanel: () => set({ panelOpen: false, selectedNodeId: null }),
+
+    // ── Agregar parte ────────────────────────────────────
+    addPart: (partType = 'manager') => {
+      const id = `part-${Date.now()}`
+      const newNode = {
+        id,
         type: 'ifsNode',
-        position: { x: 350, y: 250 },
+        position: { x: 100 + Math.random() * 400, y: 100 + Math.random() * 300 },
         data: {
-          label: 'Self', partType: 'self',
-          emotion: 'Calma, curiosidad, compasión',
-          role: 'Centro de conciencia', message: 'Estoy aquí para todos',
-          notes: '', age: '', estado: 'Desconocido', origen: '',
-          activadores: '', protege: '', polarizada: '',
-          teme: '', quiere: '', necesita: '', estrategias: '',
+          label: 'Nueva parte', partType,
+          emotion: '', role: '', message: '', notes: '',
+          age: '', estado: 'Desconocido', origen: '', activadores: '',
+          protege: '', polarizada: '', teme: '', quiere: '',
+          necesita: '', estrategias: '',
         },
       }
-      await supabase.from('parts').insert(nodeToRow(selfNode))
-      set({ nodes: [selfNode], edges: [], loading: false })
-      return
-    }
+      set({ nodes: [...get().nodes, newNode], selectedNodeId: id, panelOpen: true })
+      savePart(nodeToRow(newNode))
+    },
 
-    const flowEdges = (edges ?? []).map((e) => {
-      const isPolar = e.edge_type === 'polarization'
-      return {
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        sourceHandle: e.source_handle ?? null,
-        targetHandle: e.target_handle ?? null,
-        animated: isPolar,
-        style: isPolar
-          ? { stroke: '#cc3333', strokeWidth: 2 }
-          : { stroke: '#e8a800', strokeWidth: 2 },
-      }
-    })
+    // ── Actualizar datos de una parte ────────────────────
+    updateNodeData: (id, data) => {
+      const nodes = get().nodes.map((n) =>
+        n.id === id ? { ...n, data: { ...n.data, ...data } } : n
+      )
+      set({ nodes })
 
-    set({ nodes, edges: flowEdges, loading: false })
-  },
+      const node = nodes.find((n) => n.id === id)
+      if (node) savePartDebounced(nodeToRow(node, false))
+    },
 
-  // ── Cambios de posición (drag) ────────────────────────
-  onNodesChange: (changes) => {
-    const nodes = applyNodeChanges(changes, get().nodes)
-    set({ nodes })
-
-    // Guarda posición en Supabase solo al soltar (type: 'position' + !dragging)
-    const posChanges = changes.filter((c) => c.type === 'position' && c.dragging === false)
-    posChanges.forEach(async (c) => {
-      const node = nodes.find((n) => n.id === c.id)
-      if (node) {
-        await supabase.from('parts').update({
-          position_x: node.position.x,
-          position_y: node.position.y,
-        }).eq('id', node.id)
-      }
-    })
-  },
-
-  onEdgesChange: async (changes) => {
-    const removed = changes.filter((c) => c.type === 'remove')
-    set({ edges: applyEdgeChanges(changes, get().edges) })
-    for (const c of removed) {
-      await supabase.from('edges').delete().eq('id', c.id)
-    }
-  },
-
-  deleteEdge: async (id) => {
-    set({ edges: get().edges.filter((e) => e.id !== id) })
-    await supabase.from('edges').delete().eq('id', id)
-  },
-
-  onConnect: (connection) => {
-    set({ pendingEdge: { connection } })
-  },
-
-  confirmEdge: async (type) => {
-    const { pendingEdge } = get()
-    if (!pendingEdge) return
-    const { connection } = pendingEdge
-    const isPolar = type === 'polarization'
-    const newEdge = {
-      id: `e-${Date.now()}`,
-      source: connection.source,
-      target: connection.target,
-      sourceHandle: connection.sourceHandle ?? null,
-      targetHandle: connection.targetHandle ?? null,
-      animated: isPolar,
-      style: isPolar
-        ? { stroke: '#cc3333', strokeWidth: 2 }
-        : { stroke: '#e8a800', strokeWidth: 2 },
-    }
-    set({ edges: [...get().edges, newEdge], pendingEdge: null })
-    await supabase.from('edges').insert({
-      id: newEdge.id,
-      source: newEdge.source,
-      target: newEdge.target,
-      source_handle: connection.sourceHandle ?? null,
-      target_handle: connection.targetHandle ?? null,
-      edge_type: type,
-    })
-  },
-
-  cancelEdge: () => set({ pendingEdge: null }),
-
-  selectNode: (id) => set({ selectedNodeId: id, panelOpen: true }),
-  closePanel: () => set({ panelOpen: false, selectedNodeId: null }),
-
-  // ── Agregar parte ─────────────────────────────────────
-  addPart: async (partType = 'manager') => {
-    const id = `part-${Date.now()}`
-    const newNode = {
-      id,
-      type: 'ifsNode',
-      position: { x: 100 + Math.random() * 400, y: 100 + Math.random() * 300 },
-      data: {
-        label: 'Nueva parte', partType,
-        emotion: '', role: '', message: '', notes: '',
-        age: '', estado: 'Desconocido', origen: '', activadores: '',
-        protege: '', polarizada: '', teme: '', quiere: '',
-        necesita: '', estrategias: '',
-      },
-    }
-    set({ nodes: [...get().nodes, newNode], selectedNodeId: id, panelOpen: true })
-    await supabase.from('parts').insert(nodeToRow(newNode))
-  },
-
-  // ── Actualizar datos de una parte ─────────────────────
-  updateNodeData: async (id, data) => {
-    const nodes = get().nodes.map((n) =>
-      n.id === id ? { ...n, data: { ...n.data, ...data } } : n
-    )
-    set({ nodes })
-
-    const node = nodes.find((n) => n.id === id)
-    await supabase.from('parts').update(nodeToRow(node)).eq('id', id)
-  },
-
-  // ── Eliminar parte ────────────────────────────────────
-  deleteNode: async (id) => {
-    set({
-      nodes: get().nodes.filter((n) => n.id !== id),
-      edges: get().edges.filter((e) => e.source !== id && e.target !== id),
-      selectedNodeId: null,
-      panelOpen: false,
-    })
-    await supabase.from('parts').delete().eq('id', id)
-  },
-}))
+    // ── Eliminar parte ───────────────────────────────────
+    deleteNode: (id) => {
+      set({
+        nodes: get().nodes.filter((n) => n.id !== id),
+        edges: get().edges.filter((e) => e.source !== id && e.target !== id),
+        selectedNodeId: null,
+        panelOpen: false,
+      })
+      deletePart(id)
+    },
+  }
+})

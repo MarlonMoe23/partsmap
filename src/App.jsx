@@ -19,8 +19,34 @@ import EdgeTypeChooser from './components/EdgeTypeChooser'
 const nodeTypes = { ifsNode: IFSNode }
 const edgeTypes = { default: DeletableEdge }
 
+// Aviso pequeño abajo a la derecha: "Guardando…" o error al guardar
+function SyncStatus() {
+  const status = useStore((s) => s.syncStatus)
+  if (status === 'idle') return null
+  const isError = status === 'error'
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        right: 12,
+        bottom: 12,
+        zIndex: 70,
+        padding: '6px 10px',
+        borderRadius: 8,
+        fontSize: 12,
+        fontFamily: "'DM Sans', sans-serif",
+        background: isError ? '#cc3333' : '#faf9f7',
+        color: isError ? '#ffffff' : '#7a746c',
+        border: '1px solid #0000001e',
+      }}
+    >
+      {isError ? 'No se pudo guardar. Recarga la página.' : 'Guardando…'}
+    </div>
+  )
+}
+
 export default function App() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, loadFromDB, loading, closePanel } = useStore()
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, loadFromDB, loading, loadError, closePanel } = useStore()
   const { authed, login } = useAuth()
 
   useEffect(() => {
@@ -33,6 +59,14 @@ export default function App() {
     <div className="loading-screen">
       <div className="loading-dot" />
       <span>Cargando tu mapa...</span>
+    </div>
+  )
+
+  if (loadError) return (
+    <div className="loading-screen">
+      <span>No se pudo cargar tu mapa.</span>
+      <span style={{ maxWidth: 320, textAlign: 'center', fontSize: 12 }}>{loadError}</span>
+      <button className="gate-btn" style={{ width: 160 }} onClick={loadFromDB}>Reintentar</button>
     </div>
   )
 
@@ -70,6 +104,7 @@ export default function App() {
       </div>
       <PartPanel />
       <EdgeTypeChooser />
+      <SyncStatus />
     </div>
   )
 }

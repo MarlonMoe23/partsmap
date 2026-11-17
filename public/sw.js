@@ -1,5 +1,5 @@
-const CACHE_NAME = 'ifs-map-v1';
-const STATIC_CACHE_NAME = 'ifs-map-static-v1';
+const CACHE_NAME = 'ifs-map-v2';
+const STATIC_CACHE_NAME = 'ifs-map-static-v2';
 
 const urlsToCache = [
   '/',
@@ -40,26 +40,22 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
+  // Las llamadas a Google Sheets (otro origen) pasan directo, sin caché
   if (url.origin !== location.origin) return;
 
+  // Páginas: primero la red (así siempre ves la última versión);
+  // si no hay internet, usa la copia guardada
   if (request.destination === 'document') {
     event.respondWith(
-      caches.match(request).then((cached) => {
-        if (cached) {
-          fetch(request).then((res) => {
-            if (res.status === 200) {
-              caches.open(CACHE_NAME).then((c) => c.put(request, res.clone()));
-            }
-          }).catch(() => {});
-          return cached;
-        }
-        return fetch(request).then((res) => {
+      fetch(request)
+        .then((res) => {
           if (res.status === 200) {
-            caches.open(CACHE_NAME).then((c) => c.put(request, res.clone()));
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((c) => c.put(request, copy));
           }
           return res;
-        }).catch(() => caches.match('/'));
-      })
+        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match('/')))
     );
     return;
   }
@@ -70,7 +66,8 @@ self.addEventListener('fetch', (event) => {
         if (cached) return cached;
         return fetch(request).then((res) => {
           if (res.status === 200) {
-            caches.open(STATIC_CACHE_NAME).then((c) => c.put(request, res.clone()));
+            const copy = res.clone();
+            caches.open(STATIC_CACHE_NAME).then((c) => c.put(request, copy));
           }
           return res;
         });
