@@ -8,8 +8,9 @@
 import { timingSafeEqual } from 'node:crypto'
 
 function sameText(a, b) {
-  const x = Buffer.from(String(a ?? ''))
-  const y = Buffer.from(String(b ?? ''))
+  // Ignora espacios o saltos de línea invisibles al inicio o final
+  const x = Buffer.from(String(a ?? '').trim())
+  const y = Buffer.from(String(b ?? '').trim())
   return x.length === y.length && timingSafeEqual(x, y)
 }
 
