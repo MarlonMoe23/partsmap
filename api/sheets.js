@@ -7,10 +7,14 @@
 
 import { timingSafeEqual } from 'node:crypto'
 
+// Ignora espacios, saltos de línea y comillas que rodeen la clave
+function clean(v) {
+  return String(v ?? '').trim().replace(/^["'“”‘’]+|["'“”‘’]+$/g, '').trim()
+}
+
 function sameText(a, b) {
-  // Ignora espacios o saltos de línea invisibles al inicio o final
-  const x = Buffer.from(String(a ?? '').trim())
-  const y = Buffer.from(String(b ?? '').trim())
+  const x = Buffer.from(clean(a))
+  const y = Buffer.from(clean(b))
   return x.length === y.length && timingSafeEqual(x, y)
 }
 
@@ -18,6 +22,20 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store')
+
+  // Chequeo temporal (abre /api/sheets en el navegador). No muestra ninguna clave.
+  // Cuando todo funcione, se puede borrar este bloque.
+  if (req.method === 'GET') {
+    const p = process.env.APP_PASSWORD
+    return res.status(200).json({
+      version: 'v3',
+      APP_PASSWORD_definida: !!p,
+      SCRIPT_URL_definida: !!process.env.SCRIPT_URL,
+      SCRIPT_KEY_definida: !!process.env.SCRIPT_KEY,
+      APP_PASSWORD_tiene_comillas: !!p && clean(p) !== String(p).trim(),
+      APP_PASSWORD_tiene_espacios_o_saltos: !!p && String(p) !== String(p).trim(),
+    })
+  }
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'método no permitido' })
