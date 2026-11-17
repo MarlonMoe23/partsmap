@@ -1,20 +1,38 @@
-import { useState } from 'react'
-import { checkPassword } from '../sheets'
+import { useState, useEffect } from 'react'
+import { checkPassword, setPassword, clearPassword } from '../sheets'
 
-const KEY = 'ifs-auth'
+// Si sales de la app más de este tiempo, vuelve a pedir la clave
+const LOCK_AFTER_MS = 60 * 1000
 
-// La clave ya NO está en este archivo: la verifica el servidor de Vercel
-// (variable de entorno APP_PASSWORD).
+// La clave NO está en este archivo ni se guarda en el dispositivo:
+// la verifica el servidor de Vercel (variable APP_PASSWORD) y solo se
+// mantiene en la memoria mientras la app está abierta.
 export function useAuth() {
-  const [authed, setAuthed] = useState(() => {
-    try { return !!localStorage.getItem(KEY) } catch { return false }
-  })
+  const [authed, setAuthed] = useState(false)
+
+  // Bloqueo automático al volver a la app después de un rato
+  useEffect(() => {
+    let hiddenAt = null
+    const onChange = () => {
+      if (document.visibilityState === 'hidden') {
+        hiddenAt = Date.now()
+      } else if (hiddenAt && Date.now() - hiddenAt > LOCK_AFTER_MS) {
+        hiddenAt = null
+        clearPassword()
+        setAuthed(false)
+      } else {
+        hiddenAt = null
+      }
+    }
+    document.addEventListener('visibilitychange', onChange)
+    return () => document.removeEventListener('visibilitychange', onChange)
+  }, [])
 
   // Devuelve 'ok', 'wrong' o 'error'
   const login = async (pw) => {
     const result = await checkPassword(pw)
     if (result === 'ok') {
-      try { localStorage.setItem(KEY, pw) } catch {}
+      setPassword(pw)
       setAuthed(true)
     }
     return result
@@ -57,6 +75,7 @@ export default function PasswordGate({ onAuth }) {
           onChange={(e) => { setValue(e.target.value); setError('') }}
           onKeyDown={onKey}
           placeholder="••••••••"
+          autoComplete="off"
           autoFocus
         />
         {error && <div className="gate-error">{error}</div>}

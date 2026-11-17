@@ -3,11 +3,25 @@
 // no en este código).
 
 const API_URL = '/api/sheets'
-const AUTH_KEY = 'ifs-auth'
+
+// La clave de acceso vive SOLO en la memoria de la pestaña: al cerrar o
+// recargar la app, hay que escribirla otra vez.
+let sessionPassword = ''
+
+export function setPassword(pw) {
+  sessionPassword = pw
+}
+
+export function clearPassword() {
+  sessionPassword = ''
+}
 
 function getPassword() {
-  try { return localStorage.getItem(AUTH_KEY) || '' } catch { return '' }
+  return sessionPassword
 }
+
+// Borra la clave que versiones anteriores dejaban guardada en el dispositivo
+try { localStorage.removeItem('ifs-auth') } catch {}
 
 const SAVE_DELAY = 800 // ms que espera después de dejar de escribir antes de guardar
 
@@ -30,8 +44,8 @@ function refreshStatus() {
 // ── Llamadas al script ─────────────────────────────────────────────────
 async function parse(res) {
   if (res.status === 401) {
-    // La clave guardada ya no sirve: volver a la pantalla de entrada
-    try { localStorage.removeItem(AUTH_KEY) } catch {}
+    // La clave ya no sirve: volver a la pantalla de entrada
+    clearPassword()
     if (typeof window !== 'undefined') window.location.reload()
     throw new Error('Clave de acceso incorrecta')
   }
