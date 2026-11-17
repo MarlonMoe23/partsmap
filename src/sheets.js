@@ -1,11 +1,13 @@
-// Conexión con Google Sheets a través del Apps Script publicado como web app.
-// Reemplaza a supabase.js
+// Conexión con Google Sheets a través de la función de servidor /api/sheets
+// (la clave y la URL del Apps Script viven en variables de entorno de Vercel,
+// no en este código).
 
-const SCRIPT_URL =
-  'https://script.google.com/macros/s/AKfycbwp8YDiKC5-UL4Rfay-gveZRb6PpiCZJtY2GeqUHF4AjVSpqus--rZj4yzzPeFd3NBG/exec'
+const API_URL = '/api/sheets'
+const AUTH_KEY = 'ifs-auth'
 
-// Pega aquí la MISMA clave que pusiste en la primera línea del Apps Script
-const SCRIPT_KEY = 'ifs-mapa-2026-xyz'
+function getPassword() {
+  try { return localStorage.getItem(AUTH_KEY) || '' } catch { return '' }
+}
 
 const SAVE_DELAY = 800 // ms que espera después de dejar de escribir antes de guardar
 
@@ -27,34 +29,47 @@ function refreshStatus() {
 
 // ── Llamadas al script ─────────────────────────────────────────────────
 async function parse(res) {
-  if (!res.ok) throw new Error('Respuesta ' + res.status + ' del script')
+  if (res.status === 401) {
+    // La clave guardada ya no sirve: volver a la pantalla de entrada
+    try { localStorage.removeItem(AUTH_KEY) } catch {}
+    if (typeof window !== 'undefined') window.location.reload()
+    throw new Error('Clave de acceso incorrecta')
+  }
   const text = await res.text()
   let data
   try {
     data = JSON.parse(text)
   } catch {
-    throw new Error('El script no devolvió datos válidos. Revisa que esté publicado para "Cualquier persona".')
+    throw new Error('No se pudo conectar con el servidor (Respuesta ' + res.status + ')')
   }
-  if (data.error) throw new Error(data.error === 'no autorizado' ? 'Clave incorrecta: revisa SCRIPT_KEY en src/sheets.js' : data.error)
+  if (!res.ok || data.error) throw new Error(data.error || 'Respuesta ' + res.status)
   return data
 }
 
-function checkKey() {
-  if (SCRIPT_KEY === 'PEGA_AQUI_TU_CLAVE') {
-    throw new Error('Falta pegar tu clave en src/sheets.js (SCRIPT_KEY)')
-  }
-}
-
 async function post(body, keepalive = false) {
-  checkKey()
-  const res = await fetch(SCRIPT_URL, {
+  const res = await fetch(API_URL, {
     method: 'POST',
-    // text/plain evita la verificación previa de CORS que Apps Script no soporta
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ key: SCRIPT_KEY, ...body }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: getPassword(), ...body }),
     keepalive,
   })
   return parse(res)
+}
+
+// Verifica la clave de acceso (pantalla de entrada)
+export async function checkPassword(pw) {
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw, action: 'ping' }),
+    })
+    if (res.status === 401) return 'wrong'
+    if (!res.ok) return 'error'
+    return 'ok'
+  } catch {
+    return 'error'
+  }
 }
 
 async function postWithRetry(body) {
@@ -65,7 +80,7 @@ async function postWithRetry(body) {
     } catch (err) {
       lastErr = err
       // Si la clave está mal no tiene sentido reintentar
-      if (String(err.message).startsWith('Clave') || String(err.message).startsWith('Falta')) break
+      if (String(err.message).startsWith('Clave') || String(err.message).startsWith('Faltan')) break
       await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)))
     }
   }
@@ -93,9 +108,7 @@ function enqueue(body) {
 
 // ── Lectura ────────────────────────────────────────────────────────────
 export async function loadAll() {
-  checkKey()
-  const url = SCRIPT_URL + '?key=' + encodeURIComponent(SCRIPT_KEY) + '&t=' + Date.now()
-  const data = await parse(await fetch(url))
+  const data = await post({ action: 'load' })
   return { parts: data.parts ?? [], edges: data.edges ?? [] }
 }
 
