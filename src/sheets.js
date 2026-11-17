@@ -60,14 +60,19 @@ async function parse(res) {
   return data
 }
 
-async function post(body, keepalive = false) {
-  const res = await fetch(API_URL, {
+async function post(body, keepalive = false, url = API_URL) {
+  const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password: getPassword(), ...body }),
     keepalive,
   })
   return parse(res)
+}
+
+// Asistente de IA (función de servidor /api/ai)
+export function callAI(body) {
+  return post(body, false, '/api/ai')
 }
 
 // Verifica la clave de acceso (pantalla de entrada)

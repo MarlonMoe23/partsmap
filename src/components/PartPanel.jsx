@@ -1,6 +1,7 @@
 import { useStore, PART_TYPES } from '../store/useStore'
 import { X, Trash2, GripHorizontal } from 'lucide-react'
 import { useRef, useState } from 'react'
+import AIAssistant from './AIAssistant'
 
 const ESTADOS = ['Activa', 'En paz', 'En proceso', 'Desconocido']
 
@@ -64,6 +65,8 @@ export default function PartPanel() {
       </div>
 
       <div className="panel-body">
+        <AIAssistant key={selectedNodeId} nodeId={selectedNodeId} data={data} />
+
         <div className="panel-section-title">Identidad</div>
 
         <div className="field-row">
